@@ -8,6 +8,8 @@ from jj_spec_validator import Config as jj_sv_Config
 from vedro.core import Dispatcher, Plugin, PluginConfig
 from vedro.events import CleanupEvent, ScenarioReportedEvent, StartupEvent
 
+__all__ = ("SpecValidator", "SpecValidatorPlugin")
+
 
 class SpecValidatorPlugin(Plugin):
     def __init__(self, config: Type["SpecValidator"]) -> None:
