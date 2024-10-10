@@ -70,8 +70,12 @@ class SpecValidatorPlugin(Plugin):
             with output_file.open('w', encoding='utf-8') as f:
                 json.dump(output, f, ensure_ascii=False, indent=4)
 
-    def _custom_output(self, func_name: str, e: Exception):
-        self.buffer_structure[func_name] = str(e)
+    def _custom_output(self, func_name: str, e: Exception, text: str = None):
+        if text:
+            self.buffer_structure[func_name] = text
+        else:
+            self.buffer_structure[func_name] = str(e)
+
 
 
 class SpecValidator(PluginConfig):
