@@ -18,6 +18,7 @@ class SpecValidatorPlugin(Plugin):
         self.buffer_structure: dict[str, Any] = {}
         jj_sv_Config.IS_RAISES = config.is_raised
         jj_sv_Config.IS_STRICT = config.is_strict
+        jj_sv_Config.SKIP_IF_FAILED_TO_GET_SPEC = config.skip_if_failed_to_get_spec
         jj_sv_Config.OUTPUT_FUNCTION = self._custom_output
 
     def subscribe(self, dispatcher: Dispatcher) -> None:
@@ -84,3 +85,5 @@ class SpecValidator(PluginConfig):
     is_raised = False  # If True - raises error when validation is failes. False for disable throwing error.
 
     is_strict = False  # If True - validate exact structure in given mocked. False - allow to mock incomplete body.
+
+    skip_if_failed_to_get_spec = False # If True - validation will be skipped if failed to get spec.

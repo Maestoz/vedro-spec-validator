@@ -8,7 +8,7 @@ def find_required():
 
 setup(
     name="vedro-spec-validator",
-    version="0.0.8",
+    version="0.0.9",
     description="Vedro Spec Validator plugin",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
