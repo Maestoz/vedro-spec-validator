@@ -1,3 +1,2 @@
-jj-spec-validator>=0.1.9,<1.0.0
+jj-spec-validator>=1.0.0,<2.0.0
 vedro>=1.10,<2.0
-
