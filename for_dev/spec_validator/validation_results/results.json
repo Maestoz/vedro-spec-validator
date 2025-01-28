@@ -1,0 +1,7 @@
+{
+    "mocked_debug": {
+        "scenarios": {
+            "test_test.py": "\nsubject: test_subject\nd42.ValidationException\n- Value contains extra key 'checkin'\n"
+        }
+    }
+}

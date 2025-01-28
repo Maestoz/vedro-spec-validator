@@ -1,6 +1,6 @@
 from typing import Callable, TypeVar
 
-from jj_spec_validator import validate_spec as validate_spec_external
+from .jj_spec_validator import validate_spec as validate_spec_external
 
 _T = TypeVar('_T')
 

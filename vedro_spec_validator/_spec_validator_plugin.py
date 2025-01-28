@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 from typing import Any, Type
 
-from jj_spec_validator import Config as jj_sv_Config
+from .jj_spec_validator import Config as jj_sv_Config
 from vedro.core import Dispatcher, Plugin, PluginConfig
 from vedro.events import CleanupEvent, ScenarioReportedEvent, StartupEvent
 
