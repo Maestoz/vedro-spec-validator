@@ -83,10 +83,9 @@ class Validator(BaseValidator):
                            ) -> tuple[SchemaData | None, Any] | tuple[None, None]:
         mock_matcher = mocked.handler.matcher
         try:
-            # check for JSON in response of mock
-            decoded_mocked_body = loads(mocked.handler.response.get_body().decode())
+            mocked_body = loads(mocked.handler.response.get_body().decode())
         except JSONDecodeError:
-            raise AssertionError(f"JSON expected in Response body of the {self.func_name}")
+            mocked_body = mocked.handler.response.get_body()
 
         spec_matcher = create_openapi_matcher(matcher=mock_matcher, prefix=self.prefix)
 
@@ -117,7 +116,7 @@ class Validator(BaseValidator):
 
         spec_unit = prepared_spec.get(matched_status_spec_units[0])
 
-        return spec_unit, decoded_mocked_body
+        return spec_unit, mocked_body
 
     def validate(self,
                  mocked: _T,

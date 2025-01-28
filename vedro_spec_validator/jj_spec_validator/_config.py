@@ -2,6 +2,7 @@ class Config:
     # service
     MAIN_DIRECTORY = "spec_validator"
     GET_SPEC_TIMEOUT = 30.0
+    IS_ENABLED = True
 
     # interface
     OUTPUT_FUNCTION = None  # can be used for custom output func
