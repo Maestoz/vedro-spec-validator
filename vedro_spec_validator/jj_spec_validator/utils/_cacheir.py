@@ -19,10 +19,10 @@ CACHE_DIR = Config.MAIN_DIRECTORY + '/_cache_parsed_specs'
 CACHE_TTL = 3600  # in second
 
 
-def _build_entity_dict(entities: List[SchemaData]) -> Dict[Tuple[str, str], SchemaData]:
+def _build_entity_dict(entities: List[SchemaData]) -> Dict[Tuple[str, str, str], SchemaData]:
     entity_dict = {}
     for entity in entities:
-        entity_key = (entity.http_method.upper(), entity.path)
+        entity_key = (entity.http_method.upper(), entity.path, entity.status)
         entity_dict[entity_key] = entity
     return entity_dict
 
@@ -101,7 +101,7 @@ def _save_cache(spec_link: str, raw_schema: dict[str, Any]) -> None:
         dump(raw_schema, f)
 
 
-def load_cache(validator: BaseValidator) -> Dict[Tuple[str, str], SchemaData] | None:
+def load_cache(validator: BaseValidator) -> Dict[Tuple[str, str, str], SchemaData] | None:
     filename = _get_cache_filename(validator.spec_link)
 
     if _validate_cache_file(filename):

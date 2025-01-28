@@ -73,7 +73,7 @@ class Validator(BaseValidator):
         if self.is_raise_error:
             raise ValidationException(f"There are some mismatches in {self.func_name}:\n{str(exception)}")
 
-    def prepare_data(self) -> dict[tuple[str, str], SchemaData] | None:
+    def prepare_data(self) -> dict[tuple[str, str, str], SchemaData] | None:
         if self.spec_link is None:
             raise ValueError("Spec link cannot be None")
         return load_cache(self)
@@ -100,19 +100,22 @@ class Validator(BaseValidator):
         all_spec_units = prepared_spec.keys()
         formatted_units = "\n".join([str(key) for key in all_spec_units])
 
-        matched_spec_units = [(http_method, path) for http_method, path in all_spec_units if
+        matched_spec_units = [(http_method, path, status) for http_method, path, status in all_spec_units if
                               spec_matcher.match((http_method, path))]
 
-        if len(matched_spec_units) > 1:
+        matched_status_spec_units = [(http_method, path, status) for http_method, path, status in matched_spec_units if
+                                     status == mocked.handler.response.status]
+
+        if len(matched_status_spec_units) > 1:
             raise AssertionError(f"There is more than 1 matches for mocked API method '{spec_matcher}\n"
                                  f"in the {self.spec_link}.")
 
-        elif len(matched_spec_units) == 0:
+        elif len(matched_status_spec_units) == 0:
             raise AssertionError(f"Mocked API method: '{spec_matcher}'\nwas not found in the {self.spec_link} "
                                  f"for the validation of {self.func_name}.\n"
                                  f"Presented units:\n{formatted_units}.")
 
-        spec_unit = prepared_spec.get(matched_spec_units[0])
+        spec_unit = prepared_spec.get(matched_status_spec_units[0])
 
         return spec_unit, decoded_mocked_body
 
