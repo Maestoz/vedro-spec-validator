@@ -45,8 +45,7 @@ def validate_spec(*,
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = await func(*args, **kwargs)
-            debug = Config.IS_ENABLED
-            if validator.spec_link and debug:
+            if validator.spec_link and Config.IS_ENABLED:
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
@@ -57,10 +56,7 @@ def validate_spec(*,
         @wraps(func)
         def sync_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = func(*args, **kwargs)
-            debug = Config.IS_ENABLED
-            debug_two = Config.SKIP_IF_FAILED_TO_GET_SPEC
-
-            if validator.spec_link and debug:
+            if validator.spec_link and Config.IS_ENABLED:
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked

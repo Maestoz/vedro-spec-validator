@@ -78,14 +78,17 @@ class Validator(BaseValidator):
             raise ValueError("Spec link cannot be None")
         return load_cache(self)
 
-    def _prepare_validation(self,
-                           mocked,
+    def _prepare_validation(self, mocked,
                            ) -> tuple[SchemaData | None, Any] | tuple[None, None]:
         mock_matcher = mocked.handler.matcher
-        try:
-            mocked_body = loads(mocked.handler.response.get_body().decode())
-        except JSONDecodeError:
-            mocked_body = mocked.handler.response.get_body()
+
+        if mocked.handler.response.content_type.lower().startswith("application/json") == "application/json":
+            try:
+                mocked_body = loads(mocked.handler.response.get_body())
+            except JSONDecodeError:
+                raise AssertionError(f"There is no valid JSON in {self.func_name}")
+        else:
+            mocked_body = mocked.handler.response.text
 
         spec_matcher = create_openapi_matcher(matcher=mock_matcher, prefix=self.prefix)
 
@@ -110,7 +113,7 @@ class Validator(BaseValidator):
                                  f"in the {self.spec_link}.")
 
         elif len(matched_status_spec_units) == 0:
-            raise AssertionError(f"Mocked API method: '{spec_matcher}'\nwas not found in the {self.spec_link} "
+            raise AssertionError(f"Mocked API method: {spec_matcher}, with status: {mocked.handler.response.status}\nwas not found in the {self.spec_link} "
                                  f"for the validation of {self.func_name}.\n"
                                  f"Presented units:\n{formatted_units}.")
 

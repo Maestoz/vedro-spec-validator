@@ -2,7 +2,6 @@
 
 ### Version Compatibility Notice
 
-- For versions of this package **below 0.1.0**, only version 1 of the [`d42`](https://github.com/d42-schemas/d42) package is compatible.
 - For versions of this package **0.1.0 and later**, only version 2 of the [`d42`](https://github.com/d42-schemas/d42) package is compatible.
 
 

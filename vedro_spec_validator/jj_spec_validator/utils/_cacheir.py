@@ -5,6 +5,8 @@ from pickle import dump
 from pickle import load as pickle_load
 from time import time
 from typing import Any, Dict, List, Tuple
+from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 from schemax import SchemaData, collect_schema_data
@@ -108,24 +110,41 @@ def load_cache(validator: BaseValidator) -> Dict[Tuple[str, str, str], SchemaDat
         with open(filename, 'rb') as f:
             raw_schema = pickle_load(f)
     else:
-        raw_spec = _download_spec(validator)
-        if raw_spec is None:
-            return None
-
-        content_type = raw_spec.headers.get('Content-Type', '')
-
-        if 'application/json' in content_type:
-            raw_schema = json.loads(raw_spec.text)
-        elif 'text/yaml' in content_type or 'application/x-yaml' in content_type:
-            raw_schema = load(raw_spec.text, Loader=CLoader)
+        parsed_url = urlparse(validator.spec_link)
+        
+        # Если это локальный файл
+        if not parsed_url.scheme:
+            path = Path(validator.spec_link)
+            if not path.exists():
+                raise FileNotFoundError(f"Specification file not found: {validator.spec_link}")
+                
+            with open(path, 'r') as f:
+                if path.suffix == '.json':
+                    raw_schema = json.loads(f.read())
+                elif path.suffix in ('.yml', '.yaml'):
+                    raw_schema = load(f.read(), Loader=CLoader)
+                else:
+                    raise ValueError(f"Unsupported file format: {path.suffix}")
         else:
-            # trying to match via file extension
-            if validator.spec_link.endswith('.json'):
+            # Существующая логика для URL
+            raw_spec = _download_spec(validator)
+            if raw_spec is None:
+                return None
+
+            content_type = raw_spec.headers.get('Content-Type', '')
+
+            if 'application/json' in content_type:
                 raw_schema = json.loads(raw_spec.text)
-            elif validator.spec_link.endswith('.yaml') or validator.spec_link.endswith('.yml'):
+            elif 'text/yaml' in content_type or 'application/x-yaml' in content_type:
                 raw_schema = load(raw_spec.text, Loader=CLoader)
             else:
-                raise ValueError(f"Unsupported content type: {content_type}")
+                # trying to match via file extension
+                if validator.spec_link.endswith('.json'):
+                    raw_schema = json.loads(raw_spec.text)
+                elif validator.spec_link.endswith('.yaml') or validator.spec_link.endswith('.yml'):
+                    raw_schema = load(raw_spec.text, Loader=CLoader)
+                else:
+                    raise ValueError(f"Unsupported content type: {content_type}")
 
         _save_cache(validator.spec_link, raw_schema)
 

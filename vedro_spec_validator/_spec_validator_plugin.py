@@ -4,9 +4,12 @@ import shutil
 from pathlib import Path
 from typing import Any, Type
 
-from .jj_spec_validator import Config as jj_sv_Config
 from vedro.core import Dispatcher, Plugin, PluginConfig
 from vedro.events import CleanupEvent, ScenarioReportedEvent, StartupEvent
+from .jj_spec_validator import Config as jj_sv_Config
+
+jj_sv_Config.IS_ENABLED = False
+
 
 __all__ = ("SpecValidator", "SpecValidatorPlugin")
 
@@ -18,7 +21,7 @@ class SpecValidatorPlugin(Plugin):
         self.buffer_structure: dict[str, Any] = {}
         jj_sv_Config.IS_RAISES = config.is_raised
         jj_sv_Config.IS_STRICT = config.is_strict
-        jj_sv_Config.IS_ENABLED = False
+        jj_sv_Config.IS_ENABLED = True
         jj_sv_Config.SKIP_IF_FAILED_TO_GET_SPEC = config.skip_if_failed_to_get_spec
         jj_sv_Config.OUTPUT_FUNCTION = self._custom_output
 
