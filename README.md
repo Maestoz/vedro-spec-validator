@@ -43,7 +43,7 @@ class Config(vedro.Config):
 
     class Plugins(vedro.Config.Plugins):
 
-        class VedroSpecValidator(vedro_spec_validator.VedroSpecValidator):
+        class SpecValidator(vedro_spec_validator.SpecValidator):
             enabled = True
 ```
 
