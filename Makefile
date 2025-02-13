@@ -1,7 +1,7 @@
 .PHONY: install
 install:
 	pip3 install --quiet --upgrade pip
-	pip3 install --quiet -r requirements.txt -r
+	pip3 install --quiet -r requirements.txt
 
 .PHONY: build
 build:
