@@ -81,8 +81,7 @@ class Validator(BaseValidator):
     def _prepare_validation(self, mocked,
                            ) -> tuple[SchemaData | None, Any] | tuple[None, None]:
         mock_matcher = mocked.handler.matcher
-
-        if mocked.handler.response.content_type.lower().startswith("application/json") == "application/json":
+        if mocked.handler.response.content_type.lower().startswith("application/json"):
             try:
                 mocked_body = loads(mocked.handler.response.get_body())
             except JSONDecodeError:

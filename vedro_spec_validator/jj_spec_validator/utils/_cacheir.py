@@ -112,7 +112,6 @@ def load_cache(validator: BaseValidator) -> Dict[Tuple[str, str, str], SchemaDat
     else:
         parsed_url = urlparse(validator.spec_link)
         
-        # Если это локальный файл
         if not parsed_url.scheme:
             path = Path(validator.spec_link)
             if not path.exists():
@@ -126,7 +125,6 @@ def load_cache(validator: BaseValidator) -> Dict[Tuple[str, str, str], SchemaDat
                 else:
                     raise ValueError(f"Unsupported file format: {path.suffix}")
         else:
-            # Существующая логика для URL
             raw_spec = _download_spec(validator)
             if raw_spec is None:
                 return None

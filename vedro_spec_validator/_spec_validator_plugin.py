@@ -47,6 +47,7 @@ class SpecValidatorPlugin(Plugin):
             file_path = scenario_path_for_mocked / f"{str(scenario_name)}.txt"
             with file_path.open('a') as file:
                 file.write('\n' + 'subject: ' + scenario_paramsed_subject + '\n' + self.buffer_structure[elem] + '\n')
+        self.buffer_structure = {}
 
     async def finish_run(self, event: CleanupEvent) -> None:
         output: dict[str, Any] = {}
