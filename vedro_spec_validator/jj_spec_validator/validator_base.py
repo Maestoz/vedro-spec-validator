@@ -12,7 +12,7 @@ class BaseValidator(ABC):
         pass
 
     @abstractmethod
-    def output(self, e: Exception, text: str = None) -> None:
+    def output(self, e: Exception | None = None, text: str | None = None) -> None:
         pass
 
     @property

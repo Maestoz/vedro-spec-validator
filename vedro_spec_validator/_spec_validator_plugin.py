@@ -19,6 +19,8 @@ class SpecValidatorPlugin(Plugin):
         super().__init__(config)
         self.main_artifact_dir_path = Path(jj_sv_Config.MAIN_DIRECTORY) / "validation_results"
         self.buffer_structure: dict[str, Any] = {}
+        self.by_unique_missmatch: dict[str, Any] = {}
+        self.skipped_list: list[str] = []
         jj_sv_Config.IS_RAISES = config.is_raised
         jj_sv_Config.IS_STRICT = config.is_strict
         jj_sv_Config.IS_ENABLED = True
@@ -47,6 +49,25 @@ class SpecValidatorPlugin(Plugin):
             file_path = scenario_path_for_mocked / f"{str(scenario_name)}.txt"
             with file_path.open('a') as file:
                 file.write('\n' + 'subject: ' + scenario_paramsed_subject + '\n' + self.buffer_structure[elem] + '\n')
+
+        for elem in self.buffer_structure:
+            if elem in self.by_unique_missmatch:
+                for i in self.by_unique_missmatch[elem]:
+                    if i["missmatch_message"] == self.buffer_structure[elem]:
+                        i["scenarios"].append(scenario_name)
+                        break
+            else:
+                self.by_unique_missmatch[elem] = []
+                self.by_unique_missmatch[elem].append({
+                    "scenarios": [scenario_name],
+                    "missmatch_message": self.buffer_structure[elem]
+                })
+        if self.by_unique_missmatch:
+            by_unique_missmatch_file = self.main_artifact_dir_path / "by_unique_missmatch.json"
+
+            with by_unique_missmatch_file.open('w', encoding='utf-8') as f:
+                json.dump(self.by_unique_missmatch, f, ensure_ascii=False, indent=4)
+
         self.buffer_structure = {}
 
     async def finish_run(self, event: CleanupEvent) -> None:
@@ -76,11 +97,25 @@ class SpecValidatorPlugin(Plugin):
             with output_file.open('w', encoding='utf-8') as f:
                 json.dump(output, f, ensure_ascii=False, indent=4)
 
-    def _custom_output(self, func_name: str, e: Exception, text: str = None):
-        if text:
-            self.buffer_structure[func_name] = text
-        else:
-            self.buffer_structure[func_name] = str(e)
+        if self.skipped_list:
+            skipped_output_file = self.main_artifact_dir_path / "skipped_functions.txt"
+
+            with skipped_output_file.open('w', encoding='utf-8') as f:
+                [f.write(f"{skipped}\n") for skipped in self.skipped_list]
+
+    def _custom_output(self, func_name: str, e: Exception | None = None, text: str = None):
+        if e and text:
+            if func_name in self.buffer_structure:
+                self.buffer_structure[func_name] += "\n\n" + text
+            else:
+                self.buffer_structure[func_name] = text
+        elif e:
+            if func_name in self.buffer_structure:
+                self.buffer_structure[func_name] += "\n\n" + str(e)
+            else:
+                self.buffer_structure[func_name] = str(e)
+        elif "is skipped" in text:
+            self.skipped_list.append(text)
 
 
 
