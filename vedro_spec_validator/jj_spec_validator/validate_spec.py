@@ -12,6 +12,7 @@ _T = TypeVar('_T')
 
 def validate_spec(*,
                   spec_link: str | None,
+                  skip_reason: str | None = None,
                   skip_if_failed_to_get_spec: bool | None = None,
                   is_raise_error: bool | None = None,
                   is_strict: bool | None = None,
@@ -23,6 +24,7 @@ def validate_spec(*,
 
     Args:
        skip_if_failed_to_get_spec: If True - skip validation if failed to get spec. False is default.
+       skip_reason: The reason to skip validation. If not None - skip validation.
        spec_link: The link to the specification. `None` for disable validation.
        is_raise_error: If True - raises error when validation is failes. False is default.
        is_strict: If True - validate exact structure in given mocked.
@@ -34,6 +36,7 @@ def validate_spec(*,
 
         validator = Validator(
             spec_link=spec_link,
+            skip_reason=skip_reason,
             prefix=prefix,
             func_name=func_name,
             force_strict=force_strict,
@@ -45,7 +48,7 @@ def validate_spec(*,
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = await func(*args, **kwargs)
-            if validator.spec_link and Config.IS_ENABLED:
+            if validator.spec_link and Config.IS_ENABLED and (not skip_reason):
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
@@ -56,7 +59,7 @@ def validate_spec(*,
         @wraps(func)
         def sync_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = func(*args, **kwargs)
-            if validator.spec_link and Config.IS_ENABLED:
+            if validator.spec_link and Config.IS_ENABLED and (not skip_reason):
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked

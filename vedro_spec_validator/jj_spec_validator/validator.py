@@ -18,17 +18,22 @@ class Validator(BaseValidator):
                  is_raise_error: bool,
                  is_strict: bool,
                  func_name: str,
+                 skip_reason: str | None = None,
                  spec_link: str | None = None,
                  force_strict: bool = False,
                  prefix: str | None = None,
                  ):
         self.skip_if_failed_to_get_spec = skip_if_failed_to_get_spec
+        self.skip_reason = skip_reason
         self.is_raise_error = is_raise_error
         self.is_strict = is_strict
         self.func_name = func_name
         self.spec_link = spec_link
         self.force_strict = force_strict
         self.prefix = prefix
+
+        if skip_reason:
+            Validator.output(self, text=f"{self.func_name} is skipped because: {skip_reason}")
 
     @property
     def func_name(self) -> str:
@@ -55,14 +60,16 @@ class Validator(BaseValidator):
         self._skip_if_failed_to_get_spec = value
 
     def output(self,
-               e: Exception,
+               e: Exception = None,
                text: str = None,
                ) -> None:
         if Config.OUTPUT_FUNCTION is None:
-            if text:
+            if text and e:
                 print(f"⚠️ ⚠️ ⚠️ {text} in {self.func_name} :\n{str(e)}\n")
-            else:
+            elif e:
                 print(f"⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :\n{str(e)}\n")
+            else:
+                print(text)
         else:
             Config.OUTPUT_FUNCTION(self.func_name, e, text)
 
