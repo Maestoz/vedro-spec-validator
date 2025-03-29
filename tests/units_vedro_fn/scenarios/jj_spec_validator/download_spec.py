@@ -1,7 +1,6 @@
 from unittest.mock import Mock, patch
 
 import httpx
-from jj.mock import Mock
 from vedro import params
 from vedro_fn import given, scenario, then, when
 
