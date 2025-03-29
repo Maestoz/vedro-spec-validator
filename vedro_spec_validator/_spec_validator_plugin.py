@@ -6,6 +6,7 @@ from typing import Any, Type
 
 from vedro.core import Dispatcher, Plugin, PluginConfig
 from vedro.events import CleanupEvent, ScenarioReportedEvent, StartupEvent
+
 from .jj_spec_validator import Config as jj_sv_Config
 
 jj_sv_Config.IS_ENABLED = False

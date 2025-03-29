@@ -1,12 +1,11 @@
 from json import JSONDecodeError, loads
 from typing import Any, TypeVar
 
-from schemax import SchemaData
 from d42.validation import ValidationException, validate_or_fail
+from schemax import SchemaData
 
 from ._config import Config
-from .utils import (create_openapi_matcher, get_forced_strict_spec, load_cache,
-                    validate_non_strict)
+from .utils import create_openapi_matcher, get_forced_strict_spec, load_cache, validate_non_strict
 from .validator_base import BaseValidator
 
 _T = TypeVar('_T')
