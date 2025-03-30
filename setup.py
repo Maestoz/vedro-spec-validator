@@ -1,6 +1,7 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 from vedro_spec_validator.__version__ import __version__
+
 
 def find_required():
     with open("requirements.txt") as f:

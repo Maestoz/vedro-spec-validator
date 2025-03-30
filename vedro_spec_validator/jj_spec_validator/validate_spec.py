@@ -5,6 +5,7 @@ from typing import Callable, TypeVar
 from jj import RelayResponse
 
 from ._config import Config
+from .spec import Spec
 from .validator import Validator
 
 _T = TypeVar('_T')
@@ -45,6 +46,13 @@ def validate_spec(*,
             is_strict=is_strict if is_strict is not None else Config.IS_STRICT
             )
 
+        spec = Spec(
+            spec_link=spec_link,
+            skip_if_failed_to_get_spec=skip_if_failed_to_get_spec if skip_if_failed_to_get_spec is not None else Config.SKIP_IF_FAILED_TO_GET_SPEC,
+            is_strict=is_strict if is_strict is not None else Config.IS_STRICT,
+            force_strict=force_strict
+            )
+
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = await func(*args, **kwargs)
@@ -52,7 +60,7 @@ def validate_spec(*,
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
-                validator.validate(mocked)
+                validator.validate(mocked, spec)
             else:...
             return mocked
 
@@ -63,7 +71,7 @@ def validate_spec(*,
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
-                validator.validate(mocked)
+                validator.validate(mocked, spec)
             else:...
             return mocked
 

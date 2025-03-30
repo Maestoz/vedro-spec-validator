@@ -1,7 +1,5 @@
+from d42.declaration.types import AnySchema, DictSchema, GenericSchema, ListSchema
 from d42.utils import is_ellipsis
-from d42.declaration.types import AnySchema, DictSchema, ListSchema, GenericSchema
-
-
 from niltype import Nil
 
 __all__ = ('get_forced_strict_spec', )

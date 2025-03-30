@@ -3,17 +3,6 @@ from typing import Any
 
 
 class BaseValidator(ABC):
-    @abstractmethod
-    def validate(self, mocked: Any) -> None:
-        pass
-
-    @abstractmethod
-    def prepare_data(self) -> dict:
-        pass
-
-    @abstractmethod
-    def output(self, e: Exception | None = None, text: str | None = None) -> None:
-        pass
 
     @property
     @abstractmethod
