@@ -26,8 +26,14 @@ fix-imports:
 run-vedro-fn-units:
 	python3 -m vedro run tests/units_vedro_fn/scenarios/
 
+.PHONY: run-unittest-units
+run-unittest-units:
+	python -m unittest discover -v
+
 .PHONE: check-coverage
 check-coverage:
-	coverage run -m vedro run tests/units_vedro_fn/scenarios/
+	coverage run --parallel-mode -m vedro run tests/units_vedro_fn/scenarios/
+	coverage run --parallel-mode -m unittest discover -v
+	coverage combine
 	coverage html
 	open htmlcov/index.html

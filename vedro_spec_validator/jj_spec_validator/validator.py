@@ -4,7 +4,9 @@ from typing import Any, TypeVar
 from d42.validation import ValidationException, validate_or_fail
 from schemax import SchemaData
 
-from ._config import Config
+from . import Config
+from .output import output
+from .spec import Spec
 from .utils import create_openapi_matcher, get_forced_strict_spec, load_cache, validate_non_strict
 from .validator_base import BaseValidator
 
@@ -32,7 +34,7 @@ class Validator(BaseValidator):
         self.prefix = prefix
 
         if skip_reason:
-            Validator.output(self, text=f"{self.func_name} is skipped because: {skip_reason}")
+            output(text=f"{self.func_name} is skipped because: {skip_reason}")
 
     @property
     def func_name(self) -> str:
@@ -75,18 +77,20 @@ class Validator(BaseValidator):
     def _validation_failure(self,
                             exception: Exception,
                             ) -> None:
-        self.output(exception)
+        # self.output(exception)
+        output(func_name=self.func_name, e=exception)
+
         if self.is_raise_error:
             raise ValidationException(f"There are some mismatches in {self.func_name}:\n{str(exception)}")
 
-    def prepare_data(self) -> dict[tuple[str, str, str], SchemaData] | None:
-        if self.spec_link is None:
-            raise ValueError("Spec link cannot be None")
-        return load_cache(self)
+    # def prepare_data(self) -> dict[tuple[str, str, str], SchemaData] | None:
+    #     if self.spec_link is None:
+    #         raise ValueError("Spec link cannot be None")
+    #     return load_cache(self)
 
-    def _prepare_validation(self, mocked,
+    def _prepare_validation(self, mocked, spec: Spec,
                            ) -> tuple[SchemaData | None, Any] | tuple[None, None]:
-        mock_matcher = mocked.handler.matcher
+
         if mocked.handler.response.content_type.lower().startswith("application/json"):
             try:
                 mocked_body = loads(mocked.handler.response.get_body())
@@ -95,17 +99,19 @@ class Validator(BaseValidator):
         else:
             mocked_body = mocked.handler.response.text
 
+        mock_matcher = mocked.handler.matcher
         spec_matcher = create_openapi_matcher(matcher=mock_matcher, prefix=self.prefix)
 
         if not spec_matcher:
             raise AssertionError(f"There is no valid matcher in {self.func_name}")
 
-        prepared_spec = self.prepare_data()
+
+        # prepared_spec = self.prepare_data()
+        prepared_spec = spec.get_prepared_spec_units()
         if prepared_spec is None:
             return None, None
 
         all_spec_units = prepared_spec.keys()
-        formatted_units = "\n".join([str(key) for key in all_spec_units])
 
         matched_spec_units = [(http_method, path, status) for http_method, path, status in all_spec_units if
                               spec_matcher.match((http_method, path))]
@@ -118,6 +124,7 @@ class Validator(BaseValidator):
                                  f"in the {self.spec_link}.")
 
         elif len(matched_status_spec_units) == 0:
+            formatted_units = "\n".join([str(key) for key in all_spec_units])
             raise AssertionError(f"Mocked API method: {spec_matcher}, with status: {mocked.handler.response.status}\nwas not found in the {self.spec_link} "
                                  f"for the validation of {self.func_name}.\n"
                                  f"Presented units:\n{formatted_units}.")
@@ -126,11 +133,9 @@ class Validator(BaseValidator):
 
         return spec_unit, mocked_body
 
-    def validate(self,
-                 mocked: _T,
-                 ) -> None:
+    def validate(self, mocked: _T, spec: Spec) -> None:
 
-        spec_unit, decoded_mocked_body = self._prepare_validation(mocked=mocked)
+        spec_unit, decoded_mocked_body = self._prepare_validation(mocked=mocked, spec=spec)
         if decoded_mocked_body is None:
             return None
         if spec_unit is not None:
