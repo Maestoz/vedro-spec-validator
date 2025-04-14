@@ -5,6 +5,7 @@ from typing import Callable, TypeVar
 from jj import RelayResponse
 
 from ._config import Config
+from .output import output
 from .spec import Spec
 from .validator import Validator
 
@@ -35,28 +36,33 @@ def validate_spec(*,
     def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
         func_name = func.__name__
 
-        validator = Validator(
-            spec_link=spec_link,
-            skip_reason=skip_reason,
-            prefix=prefix,
-            func_name=func_name,
-            force_strict=force_strict,
-            skip_if_failed_to_get_spec=skip_if_failed_to_get_spec if skip_if_failed_to_get_spec is not None else Config.SKIP_IF_FAILED_TO_GET_SPEC,
-            is_raise_error=is_raise_error if is_raise_error is not None else Config.IS_RAISES,
-            is_strict=is_strict if is_strict is not None else Config.IS_STRICT
+        if skip_reason:
+            output(text=f"{func_name} is skipped because: {skip_reason}")
+        else:
+            spec = Spec(
+                spec_link=spec_link,
+                skip_if_failed_to_get_spec=skip_if_failed_to_get_spec if skip_if_failed_to_get_spec is not None else Config.SKIP_IF_FAILED_TO_GET_SPEC,
+                is_strict=is_strict if is_strict is not None else Config.IS_STRICT,
+                force_strict=force_strict
             )
 
-        spec = Spec(
-            spec_link=spec_link,
-            skip_if_failed_to_get_spec=skip_if_failed_to_get_spec if skip_if_failed_to_get_spec is not None else Config.SKIP_IF_FAILED_TO_GET_SPEC,
-            is_strict=is_strict if is_strict is not None else Config.IS_STRICT,
-            force_strict=force_strict
-            )
+            validator = Validator(
+                spec_link=spec_link,
+                skip_reason=skip_reason,
+                prefix=prefix,
+                func_name=func_name,
+                force_strict=force_strict,
+                skip_if_failed_to_get_spec=skip_if_failed_to_get_spec if skip_if_failed_to_get_spec is not None else Config.SKIP_IF_FAILED_TO_GET_SPEC,
+                is_raise_error=is_raise_error if is_raise_error is not None else Config.IS_RAISES,
+                is_strict=is_strict if is_strict is not None else Config.IS_STRICT
+                )
+
+
 
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = await func(*args, **kwargs)
-            if validator.spec_link and Config.IS_ENABLED and (not skip_reason):
+            if spec_link and Config.IS_ENABLED and (not skip_reason):  # TODO: move to non-nullable spec_link
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
@@ -67,7 +73,7 @@ def validate_spec(*,
         @wraps(func)
         def sync_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = func(*args, **kwargs)
-            if validator.spec_link and Config.IS_ENABLED and (not skip_reason):
+            if spec_link and Config.IS_ENABLED and (not skip_reason):
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked

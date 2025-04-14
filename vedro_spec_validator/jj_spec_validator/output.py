@@ -10,6 +10,6 @@ def output(func_name: str = "", text: str = None, e: Exception = None, ) -> None
             print(f"\nException: {str(e)}\n")
             # print(f"⚠️ ⚠️ ⚠️ There are some mismatches in {func_name} :\n{str(e)}\n")
         else:
-            print(f"text\n")
+            print(f"{text}\n")
     else:
         Config.OUTPUT_FUNCTION(func_name, e, text)

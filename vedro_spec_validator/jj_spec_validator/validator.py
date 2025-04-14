@@ -25,7 +25,6 @@ class Validator(BaseValidator):
                  prefix: str | None = None,
                  ):
         self.skip_if_failed_to_get_spec = skip_if_failed_to_get_spec
-        self.skip_reason = skip_reason
         self.is_raise_error = is_raise_error
         self.is_strict = is_strict
         self.func_name = func_name
@@ -33,8 +32,6 @@ class Validator(BaseValidator):
         self.force_strict = force_strict
         self.prefix = prefix
 
-        if skip_reason:
-            output(text=f"{self.func_name} is skipped because: {skip_reason}")
 
     @property
     def func_name(self) -> str:
@@ -60,25 +57,26 @@ class Validator(BaseValidator):
     def skip_if_failed_to_get_spec(self, value: bool) -> None:
         self._skip_if_failed_to_get_spec = value
 
-    def output(self,
-               e: Exception = None,
-               text: str = None,
-               ) -> None:
-        if Config.OUTPUT_FUNCTION is None:
-            if text and e:
-                print(f"⚠️ ⚠️ ⚠️ {text} in {self.func_name} :\n{str(e)}\n")
-            elif e:
-                print(f"⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :\n{str(e)}\n")
-            else:
-                print(text)
-        else:
-            Config.OUTPUT_FUNCTION(self.func_name, e, text)
+    # def output(self,
+    #            e: Exception = None,
+    #            text: str = None,
+    #            ) -> None:
+    #     if Config.OUTPUT_FUNCTION is None:
+    #         if text and e:
+    #             print(f"⚠️ ⚠️ ⚠️ {text} in {self.func_name} :\n{str(e)}\n")
+    #         elif e:
+    #             print(f"⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :\n{str(e)}\n")
+    #         else:
+    #             print(text)
+    #     else:
+    #         Config.OUTPUT_FUNCTION(self.func_name, e, text)
 
     def _validation_failure(self,
                             exception: Exception,
                             ) -> None:
         # self.output(exception)
-        output(func_name=self.func_name, e=exception)
+        # ⚠️ ⚠️ ⚠️ There are some mismatches in {func_name} :
+        output(func_name=self.func_name, text=f"⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :", e=exception)
 
         if self.is_raise_error:
             raise ValidationException(f"There are some mismatches in {self.func_name}:\n{str(exception)}")
