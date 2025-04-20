@@ -134,3 +134,4 @@ class Spec:
             return self._build_dict_of_schemas(schema_data)
         else:
             raise ValueError(f"{self.spec_link} is neither a valid URL nor a valid path")
+        
