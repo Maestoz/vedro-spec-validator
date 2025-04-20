@@ -2,7 +2,7 @@ from d42.declaration.types import AnySchema, DictSchema, GenericSchema, ListSche
 from d42.utils import is_ellipsis
 from niltype import Nil
 
-__all__ = ('get_forced_strict_spec', )
+__all__ = ('get_forced_strict_spec', 'has_ellipsis_in_all_branches')
 
 
 def get_forced_strict_spec(schema: GenericSchema) -> GenericSchema:
@@ -29,3 +29,41 @@ def get_forced_strict_spec(schema: GenericSchema) -> GenericSchema:
         return schema
     else:
         return schema
+
+def has_ellipsis_in_all_branches(schema: GenericSchema) -> bool:
+    """
+    Check if all branches of the schema contain an Ellipsis object.
+    Returns True if every branch has at least one Ellipsis, False otherwise.
+    """
+    if isinstance(schema, DictSchema):
+        if schema.props.keys is Nil or not schema.props.keys:
+            return False  # Если нет ключей, то нет и Ellipsis
+
+        # Проверяем, есть ли Ellipsis среди ключей
+        has_ellipsis_key = any(is_ellipsis(k) for k in schema.props.keys.keys())
+
+        # Если нет Ellipsis в ключах, проверяем все значения
+        if not has_ellipsis_key:
+            # Все значения должны содержать Ellipsis
+            return all(has_ellipsis_in_all_branches(v) for k, (v, _) in schema.props.keys.items())
+
+        return True  # Если есть Ellipsis в ключах, то эта ветвь содержит Ellipsis
+
+    elif isinstance(schema, ListSchema):
+        if schema.props.elements is not Nil and schema.props.elements:
+            # Все элементы списка должны содержать Ellipsis
+            return all(has_ellipsis_in_all_branches(element) for element in schema.props.elements)
+        elif schema.props.type is not Nil:
+            # Проверяем тип списка
+            return has_ellipsis_in_all_branches(schema.props.type)
+        return False  # Если нет ни элементов, ни типа, то нет и Ellipsis
+
+    elif isinstance(schema, AnySchema):
+        if schema.props.types is not Nil and schema.props.types:
+            # Все типы должны содержать Ellipsis
+            return all(has_ellipsis_in_all_branches(t) for t in schema.props.types)
+        return False  # Если нет типов, то нет и Ellipsis
+
+    else:
+        # Для других типов - проверяем, является ли сам объект Ellipsis
+        return is_ellipsis(schema)

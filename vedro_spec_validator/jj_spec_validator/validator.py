@@ -8,18 +8,17 @@ from . import Config
 from .output import output
 from .spec import Spec
 from .utils import create_openapi_matcher, get_forced_strict_spec, load_cache, validate_non_strict
-from .validator_base import BaseValidator
+from .utils._refiner import has_ellipsis_in_all_branches
 
 _T = TypeVar('_T')
 
-class Validator(BaseValidator):
+class Validator:
 
     def __init__(self,
                  skip_if_failed_to_get_spec: bool,
                  is_raise_error: bool,
                  is_strict: bool,
                  func_name: str,
-                 skip_reason: str | None = None,
                  spec_link: str | None = None,
                  force_strict: bool = False,
                  prefix: str | None = None,
@@ -32,59 +31,11 @@ class Validator(BaseValidator):
         self.force_strict = force_strict
         self.prefix = prefix
 
-
-    @property
-    def func_name(self) -> str:
-        return self._func_name
-
-    @func_name.setter
-    def func_name(self, value: str) -> None:
-        self._func_name = value
-
-    @property
-    def spec_link(self) -> str | None:
-        return self._spec_link
-
-    @spec_link.setter
-    def spec_link(self, value: str | None) -> None:
-        self._spec_link = value
-
-    @property
-    def skip_if_failed_to_get_spec(self) -> bool:
-        return self._skip_if_failed_to_get_spec
-
-    @skip_if_failed_to_get_spec.setter
-    def skip_if_failed_to_get_spec(self, value: bool) -> None:
-        self._skip_if_failed_to_get_spec = value
-
-    # def output(self,
-    #            e: Exception = None,
-    #            text: str = None,
-    #            ) -> None:
-    #     if Config.OUTPUT_FUNCTION is None:
-    #         if text and e:
-    #             print(f"⚠️ ⚠️ ⚠️ {text} in {self.func_name} :\n{str(e)}\n")
-    #         elif e:
-    #             print(f"⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :\n{str(e)}\n")
-    #         else:
-    #             print(text)
-    #     else:
-    #         Config.OUTPUT_FUNCTION(self.func_name, e, text)
-
-    def _validation_failure(self,
-                            exception: Exception,
-                            ) -> None:
-        # self.output(exception)
-        # ⚠️ ⚠️ ⚠️ There are some mismatches in {func_name} :
+    def _validation_failure(self, exception: Exception) -> None:
         output(func_name=self.func_name, text=f"⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :", e=exception)
 
         if self.is_raise_error:
-            raise ValidationException(f"There are some mismatches in {self.func_name}:\n{str(exception)}")
-
-    # def prepare_data(self) -> dict[tuple[str, str, str], SchemaData] | None:
-    #     if self.spec_link is None:
-    #         raise ValueError("Spec link cannot be None")
-    #     return load_cache(self)
+            raise ValidationException(f"There are some mismatches in {self.func_name}:\n{str(exception)}") from None
 
     def _prepare_validation(self, mocked, spec: Spec,
                            ) -> tuple[SchemaData | None, Any] | tuple[None, None]:
@@ -103,8 +54,6 @@ class Validator(BaseValidator):
         if not spec_matcher:
             raise AssertionError(f"There is no valid matcher in {self.func_name}")
 
-
-        # prepared_spec = self.prepare_data()
         prepared_spec = spec.get_prepared_spec_units()
         if prepared_spec is None:
             return None, None
@@ -140,8 +89,12 @@ class Validator(BaseValidator):
             spec_response_schema = spec_unit.response_schema_d42
             if spec_response_schema:
                 if self.force_strict:
+                    if not has_ellipsis_in_all_branches(spec_response_schema):
+                        output(func_name=self.func_name, text=f"⚠️ ⚠️ ⚠️ `is_strict=True` is not required for {self.func_name}!\n")
                     spec_response_schema = get_forced_strict_spec(spec_response_schema)
                 else:
+                    if has_ellipsis_in_all_branches(spec_response_schema):
+                        output(func_name=self.func_name, text=f"Probably `is_strict=True` is required for {self.func_name}.\n")
                     spec_response_schema = spec_response_schema
 
                 try:

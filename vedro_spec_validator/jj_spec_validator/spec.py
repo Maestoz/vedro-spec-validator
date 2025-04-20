@@ -13,6 +13,8 @@ from schemax import SchemaData, collect_schema_data
 
 from .output import output
 from .utils._cacheir import validate_cache_file, save_cache, load_cache
+from .utils._refiner import has_ellipsis_in_all_branches
+
 
 class SchemaParseError(Exception):
     """Raised when a spec cannot be parsed into a schema."""
@@ -78,6 +80,16 @@ class Spec:
                 raise ValueError(f"Unsupported content type: {content_type}")
         return raw_spec
 
+    def _get_schema_from_json(self, raw_spec: dict[str, Any]) -> list[SchemaData]:
+        try:
+            schema_data = collect_schema_data(raw_spec)
+        except Exception as e:
+            raise SchemaParseError(
+                f"Failed to parse {self.spec_link} to schema via schemax.\n"
+                f"Probably the spec is broken or has an unsupported format.\n"
+                f"Original exception: {e}")
+        return schema_data
+
     def _build_dict_of_schemas(self, schema_data: list[SchemaData]) -> dict[tuple[str, str, str], SchemaData]:
         entity_dict = {}
         if len(schema_data) == 0:
@@ -88,16 +100,6 @@ class Spec:
             entity_key = (elem.http_method.upper(), elem.path, elem.status)
             entity_dict[entity_key] = elem
         return entity_dict
-
-    def _get_schema_from_json(self, raw_spec: dict[str, Any]) -> list[SchemaData]:
-        try:
-            schema_data = collect_schema_data(raw_spec)
-        except Exception as e:
-            raise SchemaParseError(
-                f"Failed to parse {self.spec_link} to schema via schemax.\n"
-                f"Probably the spec is broken or has an unsupported format.\n"
-                f"Original exception: {e}")
-        return schema_data
 
     def _get_raw_spec_from_file(self) -> dict[str, Any]:
         path = Path(self.spec_link)

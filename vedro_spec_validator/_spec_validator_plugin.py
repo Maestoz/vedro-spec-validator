@@ -9,7 +9,7 @@ from vedro.events import CleanupEvent, ScenarioReportedEvent, StartupEvent
 
 from .jj_spec_validator import Config as jj_sv_Config
 
-# jj_sv_Config.IS_ENABLED = False
+jj_sv_Config.IS_ENABLED = False
 
 
 __all__ = ("SpecValidator", "SpecValidatorPlugin")
@@ -101,23 +101,32 @@ class SpecValidatorPlugin(Plugin):
         if self.skipped_list:
             skipped_output_file = self.main_artifact_dir_path / "skipped_functions.txt"
 
+            skipped_output_file.parent.mkdir(parents=True, exist_ok=True)
             with skipped_output_file.open('w', encoding='utf-8') as f:
                 [f.write(f"{skipped}\n") for skipped in self.skipped_list]
 
-    def _custom_output(self, func_name: str, e: Exception | None = None, text: str = None):
+    def _custom_output(self, func_name: str, text: str = None, e: Exception | None = None):
         if e and text:
-            if func_name in self.buffer_structure:
-                self.buffer_structure[func_name] += "\n\n" + text
+            if "There are some mismatches in" in text:
+                if func_name in self.buffer_structure:
+                    self.buffer_structure[func_name] += f"\n\nNext call:\n{str(e)}"
+                else:
+                    self.buffer_structure[func_name] = f"\n{str(e)}"
             else:
-                self.buffer_structure[func_name] = text
+                if func_name in self.buffer_structure:
+                    self.buffer_structure[func_name] += f"\n\n{text}\n{str(e)}"
+                else:
+                    self.buffer_structure[func_name] = f"{text}\n{str(e)}"
         elif e:
             if func_name in self.buffer_structure:
-                self.buffer_structure[func_name] += "\n\n" + str(e)
+                self.buffer_structure[func_name] += f"\n\n{str(e)}"
             else:
                 self.buffer_structure[func_name] = str(e)
-        elif "is skipped" in text:
-            self.skipped_list.append(text)
-
+        elif text:
+            if func_name in self.buffer_structure:
+                self.buffer_structure[func_name] += f"\n{text}"
+            else:
+                self.buffer_structure[func_name] = text
 
 
 class SpecValidator(PluginConfig):

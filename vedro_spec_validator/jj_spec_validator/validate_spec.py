@@ -48,7 +48,6 @@ def validate_spec(*,
 
             validator = Validator(
                 spec_link=spec_link,
-                skip_reason=skip_reason,
                 prefix=prefix,
                 func_name=func_name,
                 force_strict=force_strict,
@@ -56,7 +55,6 @@ def validate_spec(*,
                 is_raise_error=is_raise_error if is_raise_error is not None else Config.IS_RAISES,
                 is_strict=is_strict if is_strict is not None else Config.IS_STRICT
                 )
-
 
 
         @wraps(func)
