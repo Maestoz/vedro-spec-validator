@@ -94,7 +94,7 @@ class Validator:
                     spec_response_schema = get_forced_strict_spec(spec_response_schema)
                 else:
                     if has_ellipsis_in_all_branches(spec_response_schema):
-                        output(func_name=self.func_name, text=f"Probably `is_strict=True` is required for {self.func_name}.\n")
+                        output(func_name=self.func_name, text=f"⚠️ Probably `is_strict=True` is required for {self.func_name}.\n")
                     spec_response_schema = spec_response_schema
 
                 try:

@@ -13,7 +13,6 @@ from schemax import SchemaData, collect_schema_data
 
 from .output import output
 from .utils._cacheir import validate_cache_file, save_cache, load_cache
-from .utils._refiner import has_ellipsis_in_all_branches
 
 
 class SchemaParseError(Exception):

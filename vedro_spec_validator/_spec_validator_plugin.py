@@ -8,6 +8,8 @@ from vedro.core import Dispatcher, Plugin, PluginConfig
 from vedro.events import CleanupEvent, ScenarioReportedEvent, StartupEvent
 
 from .jj_spec_validator import Config as jj_sv_Config
+from .jj_spec_validator.output import output
+import schemax
 
 jj_sv_Config.IS_ENABLED = False
 
@@ -27,6 +29,7 @@ class SpecValidatorPlugin(Plugin):
         jj_sv_Config.IS_ENABLED = True
         jj_sv_Config.SKIP_IF_FAILED_TO_GET_SPEC = config.skip_if_failed_to_get_spec
         jj_sv_Config.OUTPUT_FUNCTION = self._custom_output
+        schemax.Config.OUTPUT_FUNCTION = self._schemax_output_cather
 
     def subscribe(self, dispatcher: Dispatcher) -> None:
         dispatcher.listen(ScenarioReportedEvent, self.on_scenario_reported) \
@@ -127,6 +130,10 @@ class SpecValidatorPlugin(Plugin):
                 self.buffer_structure[func_name] += f"\n{text}"
             else:
                 self.buffer_structure[func_name] = text
+
+    def _schemax_output_cather(self, message: str) -> None:
+        # hack with using "func_name" for custom outputs directory
+        output(func_name="schemax_warnings", text=message)
 
 
 class SpecValidator(PluginConfig):

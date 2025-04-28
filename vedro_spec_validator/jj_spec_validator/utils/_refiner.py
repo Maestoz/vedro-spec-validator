@@ -37,33 +37,25 @@ def has_ellipsis_in_all_branches(schema: GenericSchema) -> bool:
     """
     if isinstance(schema, DictSchema):
         if schema.props.keys is Nil or not schema.props.keys:
-            return False  # Если нет ключей, то нет и Ellipsis
+            return False
 
-        # Проверяем, есть ли Ellipsis среди ключей
         has_ellipsis_key = any(is_ellipsis(k) for k in schema.props.keys.keys())
 
-        # Если нет Ellipsis в ключах, проверяем все значения
         if not has_ellipsis_key:
-            # Все значения должны содержать Ellipsis
             return all(has_ellipsis_in_all_branches(v) for k, (v, _) in schema.props.keys.items())
-
-        return True  # Если есть Ellipsis в ключах, то эта ветвь содержит Ellipsis
+        return True
 
     elif isinstance(schema, ListSchema):
         if schema.props.elements is not Nil and schema.props.elements:
-            # Все элементы списка должны содержать Ellipsis
             return all(has_ellipsis_in_all_branches(element) for element in schema.props.elements)
         elif schema.props.type is not Nil:
-            # Проверяем тип списка
             return has_ellipsis_in_all_branches(schema.props.type)
-        return False  # Если нет ни элементов, ни типа, то нет и Ellipsis
+        return False
 
     elif isinstance(schema, AnySchema):
         if schema.props.types is not Nil and schema.props.types:
-            # Все типы должны содержать Ellipsis
             return all(has_ellipsis_in_all_branches(t) for t in schema.props.types)
-        return False  # Если нет типов, то нет и Ellipsis
+        return False
 
     else:
-        # Для других типов - проверяем, является ли сам объект Ellipsis
         return is_ellipsis(schema)
