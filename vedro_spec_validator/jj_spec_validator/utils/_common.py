@@ -1,9 +1,9 @@
 import re
 from typing import Any, Match
 
-from d42.validation import format_result, ValidationException
-from d42.substitution import SubstitutorValidator
 from d42.declaration import GenericSchema
+from d42.substitution import SubstitutorValidator
+from d42.validation import ValidationException, format_result
 
 __all__ = ('normalize_path', 'destroy_prefix', 'validate_non_strict', )
 

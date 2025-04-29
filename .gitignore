@@ -161,3 +161,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 for_dev/
+tests/units_vedro_fn/.vedro/
+.vedro/
+.DS_Store
+tests/.DS_Store

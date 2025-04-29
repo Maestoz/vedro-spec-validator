@@ -1,10 +1,8 @@
+from d42.declaration.types import AnySchema, DictSchema, GenericSchema, ListSchema
 from d42.utils import is_ellipsis
-from d42.declaration.types import AnySchema, DictSchema, ListSchema, GenericSchema
-
-
 from niltype import Nil
 
-__all__ = ('get_forced_strict_spec', )
+__all__ = ('get_forced_strict_spec', 'has_ellipsis_in_all_branches')
 
 
 def get_forced_strict_spec(schema: GenericSchema) -> GenericSchema:
@@ -31,3 +29,33 @@ def get_forced_strict_spec(schema: GenericSchema) -> GenericSchema:
         return schema
     else:
         return schema
+
+def has_ellipsis_in_all_branches(schema: GenericSchema) -> bool:
+    """
+    Check if all branches of the schema contain an Ellipsis object.
+    Returns True if every branch has at least one Ellipsis, False otherwise.
+    """
+    if isinstance(schema, DictSchema):
+        if schema.props.keys is Nil or not schema.props.keys:
+            return False
+
+        has_ellipsis_key = any(is_ellipsis(k) for k in schema.props.keys.keys())
+
+        if not has_ellipsis_key:
+            return all(has_ellipsis_in_all_branches(v) for k, (v, _) in schema.props.keys.items())
+        return True
+
+    elif isinstance(schema, ListSchema):
+        if schema.props.elements is not Nil and schema.props.elements:
+            return all(has_ellipsis_in_all_branches(element) for element in schema.props.elements)
+        elif schema.props.type is not Nil:
+            return has_ellipsis_in_all_branches(schema.props.type)
+        return False
+
+    elif isinstance(schema, AnySchema):
+        if schema.props.types is not Nil and schema.props.types:
+            return all(has_ellipsis_in_all_branches(t) for t in schema.props.types)
+        return False
+
+    else:
+        return is_ellipsis(schema)
