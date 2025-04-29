@@ -12,6 +12,42 @@ from .validator import Validator
 _T = TypeVar('_T')
 
 
+class MockedObjectStorage:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(MockedObjectStorage, cls).__new__(cls)
+            cls._instance._mocked_objects = {}
+        return cls._instance
+
+    def store(self, func_name, mocked_object):
+        self._mocked_objects[func_name] = mocked_object
+
+    def get(self, func_name=None):
+        if func_name is None:
+            # Возвращает последний добавленный объект, если имя функции не указано
+            if not self._mocked_objects:
+                return None
+            return list(self._mocked_objects.values())[-1]
+        return self._mocked_objects.get(func_name)
+
+    def get_all(self):
+        return self._mocked_objects
+
+
+# Создание синглтон-экземпляра
+storage = MockedObjectStorage()
+
+
+def get_mocked_object(func_name=None):
+    return storage.get(func_name)
+
+
+def get_all_mocked_objects():
+    return storage.get_all()
+
+
 def validate_spec(*,
                   spec_link: str,
                   skip_reason: str | None = None,
@@ -60,6 +96,8 @@ def validate_spec(*,
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = await func(*args, **kwargs)
+            storage.store(func_name, mocked)
+
             if Config.IS_ENABLED and (not skip_reason):
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
@@ -71,6 +109,8 @@ def validate_spec(*,
         @wraps(func)
         def sync_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = func(*args, **kwargs)
+            storage.store(func_name, mocked)
+
             if Config.IS_ENABLED and (not skip_reason):
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")

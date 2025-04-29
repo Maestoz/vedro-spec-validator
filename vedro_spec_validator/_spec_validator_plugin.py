@@ -9,7 +9,10 @@ from vedro.events import CleanupEvent, ScenarioReportedEvent, StartupEvent
 
 from .jj_spec_validator import Config as jj_sv_Config
 from .jj_spec_validator.output import output
+from jj.mock import Mocked
 import schemax
+
+from .jj_spec_validator.validate_spec import get_mocked_object, get_all_mocked_objects
 
 jj_sv_Config.IS_ENABLED = False
 
@@ -22,6 +25,7 @@ class SpecValidatorPlugin(Plugin):
         super().__init__(config)
         self.main_artifact_dir_path = Path(jj_sv_Config.MAIN_DIRECTORY) / "validation_results"
         self.buffer_structure: dict[str, Any] = {}
+        self.mocked_objects: list[Mocked] = []
         self.by_unique_missmatch: dict[str, Any] = {}
         self.skipped_list: list[str] = []
         jj_sv_Config.IS_RAISES = config.is_raised
@@ -45,6 +49,13 @@ class SpecValidatorPlugin(Plugin):
         scenario_rel_path = event.aggregated_result.scenario.rel_path.parent
         scenario_name = event.aggregated_result.scenario.rel_path.name
         scenario_paramsed_subject = event.aggregated_result.scenario.subject
+
+        self.mocked_objects: dict[str, Mocked] = get_all_mocked_objects()
+
+        histories: list = []
+        for mocked in self.mocked_objects:
+            histories.append(await self.mocked_objects[mocked].fetch_history())
+
 
         for elem in self.buffer_structure:
             mocked_dir_path = self.main_artifact_dir_path / Path(elem)
