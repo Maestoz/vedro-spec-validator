@@ -22,22 +22,25 @@ class SchemaParseError(Exception):
 class Spec:
     def __init__(self,
                  spec_link: str,
+                 func_name: str,
                  skip_if_failed_to_get_spec: bool = False,
                  is_strict: bool = False,
                  force_strict: bool = False,
                  ):
         self.spec_link = spec_link
+        self.func_name = func_name
         self.skip_if_failed_to_get_spec = skip_if_failed_to_get_spec
         self.is_strict = is_strict
         self.force_strict = force_strict
 
     def _download_spec(self) -> httpx.Response | None:
-        def handle_exception(exc: Exception, message: str):
+        def handle_exception(exc: Exception, message: str = ""):
             if self.skip_if_failed_to_get_spec:
-                output(e=exc, text=message)
+                output(func_name=self.func_name, e=exc, text=message)
                 return None
             else:
-                raise type(exc)(message) from exc
+                exc.args = (message,) + exc.args[1:] if exc.args else (message,)
+                raise exc
         try:
             response = httpx.get(self.spec_link, timeout=Config.GET_SPEC_TIMEOUT)
             response.raise_for_status()
@@ -50,11 +53,7 @@ class Spec:
             return handle_exception(
                 e, f"Timeout occurred while trying to read the spec from the {self.spec_link}.")
         except httpx.HTTPStatusError as e:
-            status_code = e.response.status_code
-            if 400 <= status_code < 500:
-                return handle_exception(e, f"Client error occurred: {status_code}")
-            elif 500 <= status_code < 600:
-                return handle_exception(e, f"Server error occurred: {status_code}")
+            return handle_exception(e)
         except httpx.HTTPError as e:
             return handle_exception(
                 e, f"An HTTP error occurred while trying to download the {self.spec_link}")
@@ -114,7 +113,7 @@ class Spec:
                 raise ValueError(f"Unsupported file format: {path.suffix}")
         return raw_spec
 
-    def get_prepared_spec_units(self) -> dict[tuple[str, str, str], SchemaData]:
+    def get_prepared_spec_units(self) -> dict[tuple[str, str, str], SchemaData] | None:
         if self.spec_link is None:
             raise ValueError("Spec link cannot be None")
 
@@ -123,6 +122,8 @@ class Spec:
                 raw_spec = load_cache(self.spec_link)
             else:
                 response = self._download_spec()
+                if response is None:
+                    return None
                 raw_spec = self._parse_spec(response)
                 save_cache(spec_link=self.spec_link, raw_schema=raw_spec)
             schema_data = self._get_schema_from_json(raw_spec)

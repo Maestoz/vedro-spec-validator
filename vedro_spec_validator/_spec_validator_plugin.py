@@ -29,7 +29,7 @@ class SpecValidatorPlugin(Plugin):
         jj_sv_Config.IS_ENABLED = True
         jj_sv_Config.SKIP_IF_FAILED_TO_GET_SPEC = config.skip_if_failed_to_get_spec
         jj_sv_Config.OUTPUT_FUNCTION = self._custom_output
-        schemax.Config.OUTPUT_FUNCTION = self._schemax_output_cather
+        schemax.Config.OUTPUT_FUNCTION = self._schemax_output_catcher
 
     def subscribe(self, dispatcher: Dispatcher) -> None:
         dispatcher.listen(ScenarioReportedEvent, self.on_scenario_reported) \
@@ -126,12 +126,14 @@ class SpecValidatorPlugin(Plugin):
             else:
                 self.buffer_structure[func_name] = str(e)
         elif text:
-            if func_name in self.buffer_structure:
+            if "is skipped because" in text:
+                self.skipped_list.append(text)
+            elif func_name in self.buffer_structure:
                 self.buffer_structure[func_name] += f"\n{text}"
             else:
                 self.buffer_structure[func_name] = text
 
-    def _schemax_output_cather(self, message: str) -> None:
+    def _schemax_output_catcher(self, message: str) -> None:
         # hack with using "func_name" for custom outputs directory
         output(func_name="schemax_warnings", text=message)
 

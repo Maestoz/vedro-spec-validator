@@ -41,6 +41,7 @@ def validate_spec(*,
         else:
             spec = Spec(
                 spec_link=spec_link,
+                func_name=func_name,
                 skip_if_failed_to_get_spec=skip_if_failed_to_get_spec if skip_if_failed_to_get_spec is not None else Config.SKIP_IF_FAILED_TO_GET_SPEC,
                 is_strict=is_strict if is_strict is not None else Config.IS_STRICT,
                 force_strict=force_strict

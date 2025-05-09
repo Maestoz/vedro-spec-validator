@@ -22,18 +22,17 @@ fix-imports:
 
 ### Unit tests
 
-.PHONY: run-vedro-fn-units
-run-vedro-fn-units:
-	python3 -m vedro run tests/units_vedro_fn/scenarios/
-
 .PHONY: run-unittest-units
 run-unittest-units:
-	python -m unittest discover -v
+	python -m unittest discover -v -s tests/unittest
 
-.PHONE: check-coverage
+.PHONY: run-test-spec
+run-test-spec:
+	python -m unittest tests/unittest/jj_spec_validator/test_spec.py
+
+.PHONY: check-coverage
 check-coverage:
-	coverage run --parallel-mode -m vedro run tests/units_vedro_fn/scenarios/
-	coverage run --parallel-mode -m unittest discover -v
+	coverage run --parallel-mode -m unittest discover -v -s tests/unittest
 	coverage combine
 	coverage html
 	open htmlcov/index.html

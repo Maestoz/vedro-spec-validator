@@ -90,11 +90,11 @@ class Validator:
             if spec_response_schema:
                 if self.force_strict:
                     if not has_ellipsis_in_all_branches(spec_response_schema):
-                        output(func_name=self.func_name, text=f"⚠️ ⚠️ ⚠️ `is_strict=True` is not required for {self.func_name}!\n")
+                        output(func_name=self.func_name, text=f"⚠️ ⚠️ ⚠️ `force_strict=True` is not required for {self.func_name}!\n")
                     spec_response_schema = get_forced_strict_spec(spec_response_schema)
                 else:
                     if has_ellipsis_in_all_branches(spec_response_schema):
-                        output(func_name=self.func_name, text=f"⚠️ Probably `is_strict=True` is required for {self.func_name}.\n")
+                        output(func_name=self.func_name, text=f"⚠️ Probably `force_strict=True` is required for {self.func_name}.\n")
                     spec_response_schema = spec_response_schema
 
                 try:
@@ -105,6 +105,7 @@ class Validator:
 
                 except ValidationException as exception:
                     self._validation_failure(exception)
+            return None
 
         else:
             raise AssertionError(f"API method '{spec_unit}' in the spec_link"
