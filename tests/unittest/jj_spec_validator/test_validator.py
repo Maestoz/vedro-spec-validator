@@ -164,7 +164,7 @@ class TestPrepareValidation(unittest.TestCase):
         self.mock_response.status = "200"
         
         mock_spec_matcher = Mock()
-        mock_spec_matcher.match.return_value = True
+        mock_spec_matcher.match.side_effect = lambda x: x[0] in ("GET", "POST")
         mock_create_matcher.return_value = mock_spec_matcher
         
         mock_schema_data1 = Mock(spec=SchemaData)
@@ -384,4 +384,3 @@ class TestValidate(unittest.TestCase):
         # Проверяем вызовы методов
         mock_prepare_validation.assert_called_once_with(mocked=self.mocked, spec=self.mock_spec)
         mock_validation_failure.assert_not_called()
-

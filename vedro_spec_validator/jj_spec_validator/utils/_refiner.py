@@ -34,28 +34,86 @@ def has_ellipsis_in_all_branches(schema: GenericSchema) -> bool:
     """
     Check if all branches of the schema contain an Ellipsis object.
     Returns True if every branch has at least one Ellipsis, False otherwise.
+    
+    The function recursively traverses the schema structure and checks if each
+    DictSchema in the structure contains at least one Ellipsis. If any DictSchema
+    without an Ellipsis is found, the function returns False.
+    
+    NOTE: If no DictSchema is found in the entire structure, the function returns False.
     """
-    if isinstance(schema, DictSchema):
-        if schema.props.keys is Nil or not schema.props.keys:
+    # Используем внутреннюю функцию для отслеживания наличия DictSchema
+    def _has_ellipsis_recursive(schema, dict_found=None):
+        if dict_found is None:
+            dict_found = [False]
+            
+        # Простой случай - если сама схема это эллипсис
+        if is_ellipsis(schema):
+            return True
+            
+        # Для словарей проверяем наличие эллипсиса в каждом из них
+        if isinstance(schema, DictSchema):
+            # Отмечаем, что нашли DictSchema
+            dict_found[0] = True
+            
+            # Если словарь пустой или ключи не определены - эллипсиса нет
+            if schema.props.keys is Nil or not schema.props.keys:
+                return False
+                
+            # Проверяем наличие эллипсиса среди ключей
+            has_ellipsis_key = any(is_ellipsis(k) for k in schema.props.keys.keys())
+            
+            # Если эллипсиса нет в ключах - это ошибка
+            if not has_ellipsis_key:
+                return False
+                
+            # Далее рекурсивно проверяем все вложенные схемы
+            for k, (v, _) in schema.props.keys.items():
+                if not is_ellipsis(k) and not _has_ellipsis_recursive(v, dict_found):
+                    return False
+                    
+            # Если все проверки прошли - в этом DictSchema есть эллипсис и все вложенные схемы тоже имеют эллипсис
+            return True
+            
+        # Для списков проверяем их содержимое
+        elif isinstance(schema, ListSchema):
+            # Проверяем elements если они есть
+            if schema.props.elements is not Nil and schema.props.elements:
+                # Для пустого списка элементов считаем, что DictSchema с эллипсисом нет
+                if not schema.props.elements:
+                    return False
+                    
+                for element in schema.props.elements:
+                    if not _has_ellipsis_recursive(element, dict_found):
+                        return False
+                # Если все элементы прошли проверку
+                return True
+            # Проверяем type если он есть
+            elif schema.props.type is not Nil:
+                return _has_ellipsis_recursive(schema.props.type, dict_found)
+            # Если ни elements, ни type не определены - эллипсиса нет
             return False
-
-        has_ellipsis_key = any(is_ellipsis(k) for k in schema.props.keys.keys())
-
-        if not has_ellipsis_key:
-            return all(has_ellipsis_in_all_branches(v) for k, (v, _) in schema.props.keys.items())
+            
+        # Для AnySchema проверяем все типы
+        elif isinstance(schema, AnySchema):
+            if schema.props.types is Nil or not schema.props.types:
+                return False
+                
+            for t in schema.props.types:
+                if not _has_ellipsis_recursive(t, dict_found):
+                    return False
+                    
+            return True
+            
+        # Для примитивных типов логика должна быть особой:
+        # Если это примитивный тип, в нем нет DictSchema без эллипсиса
         return True
-
-    elif isinstance(schema, ListSchema):
-        if schema.props.elements is not Nil and schema.props.elements:
-            return all(has_ellipsis_in_all_branches(element) for element in schema.props.elements)
-        elif schema.props.type is not Nil:
-            return has_ellipsis_in_all_branches(schema.props.type)
+    
+    # Отслеживаем, был ли найден хотя бы один DictSchema
+    dict_found = [False]
+    result = _has_ellipsis_recursive(schema, dict_found)
+    
+    # Костыль: если не было найдено ни одного DictSchema, возвращаем False
+    if not dict_found[0]:
         return False
-
-    elif isinstance(schema, AnySchema):
-        if schema.props.types is not Nil and schema.props.types:
-            return all(has_ellipsis_in_all_branches(t) for t in schema.props.types)
-        return False
-
-    else:
-        return is_ellipsis(schema)
+        
+    return result

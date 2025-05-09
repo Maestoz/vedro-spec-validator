@@ -26,10 +26,6 @@ fix-imports:
 run-unittest-units:
 	python -m unittest discover -v -s tests/unittest
 
-.PHONY: run-test-spec
-run-test-spec:
-	python -m unittest tests/unittest/jj_spec_validator/test_spec.py
-
 .PHONY: check-coverage
 check-coverage:
 	coverage run --parallel-mode -m unittest discover -v -s tests/unittest
