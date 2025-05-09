@@ -152,12 +152,12 @@ class TestValidateSpec(unittest.TestCase):
         mock_validator = Mock(spec=Validator)
         mock_validator_class.return_value = mock_validator
         
-        # Мокаем isinstance, чтобы он корректно определял RelayResponse
+        # Mock isinstance to correctly identify RelayResponse
         def isinstance_side_effect(obj, class_type):
             from vedro_spec_validator.jj_spec_validator.validate_spec import RelayResponse
             if class_type == RelayResponse:
                 return True
-            # Для всех остальных проверок вызываем настоящий isinstance
+            # For all other checks, call the real isinstance
             return isinstance(obj, class_type)
             
         mock_isinstance.side_effect = isinstance_side_effect

@@ -372,15 +372,12 @@ class TestValidate(unittest.TestCase):
         mock_body = {"key": "value"}
         mock_prepare_validation.return_value = (None, mock_body)
         
-        # Убедимся, что в этом случае вызывается исключение
         with self.assertRaises(AssertionError) as context:
             self.validator.validate(self.mocked, self.mock_spec)
         
-        # Проверяем сообщение исключения
         error_message = str(context.exception)
         self.assertTrue(f"API method 'None' in the spec_link" in error_message)
         self.assertTrue(f"lacks a response structure for the validation of {self.func_name}" in error_message)
         
-        # Проверяем вызовы методов
         mock_prepare_validation.assert_called_once_with(mocked=self.mocked, spec=self.mock_spec)
         mock_validation_failure.assert_not_called()
