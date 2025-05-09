@@ -1,10 +1,8 @@
+from d42.declaration.types import AnySchema, DictSchema, GenericSchema, ListSchema
 from d42.utils import is_ellipsis
-from d42.declaration.types import AnySchema, DictSchema, ListSchema, GenericSchema
-
-
 from niltype import Nil
 
-__all__ = ('get_forced_strict_spec', )
+__all__ = ('get_forced_strict_spec', 'has_ellipsis_in_all_branches')
 
 
 def get_forced_strict_spec(schema: GenericSchema) -> GenericSchema:
@@ -31,3 +29,71 @@ def get_forced_strict_spec(schema: GenericSchema) -> GenericSchema:
         return schema
     else:
         return schema
+
+def has_ellipsis_in_all_branches(schema: GenericSchema) -> bool:
+    """
+    Check if all branches of the schema contain an Ellipsis object.
+    Returns True if every branch has at least one Ellipsis, False otherwise.
+    
+    The function recursively traverses the schema structure and checks if each
+    DictSchema in the structure contains at least one Ellipsis. If any DictSchema
+    without an Ellipsis is found, the function returns False.
+    
+    NOTE: If no DictSchema is found in the entire structure, the function returns False.
+    """
+    def _has_ellipsis_recursive(schema, dict_found=None):
+        if dict_found is None:
+            dict_found = [False]
+            
+        if is_ellipsis(schema):
+            return True
+            
+        if isinstance(schema, DictSchema):
+            dict_found[0] = True
+            
+            if schema.props.keys is Nil or not schema.props.keys:
+                return False
+                
+            has_ellipsis_key = any(is_ellipsis(k) for k in schema.props.keys.keys())
+            
+            if not has_ellipsis_key:
+                return False
+                
+            for k, (v, _) in schema.props.keys.items():
+                if not is_ellipsis(k) and not _has_ellipsis_recursive(v, dict_found):
+                    return False
+                    
+            return True
+            
+        elif isinstance(schema, ListSchema):
+            if schema.props.elements is not Nil and schema.props.elements:
+                if not schema.props.elements:
+                    return False
+                    
+                for element in schema.props.elements:
+                    if not _has_ellipsis_recursive(element, dict_found):
+                        return False
+                return True
+            elif schema.props.type is not Nil:
+                return _has_ellipsis_recursive(schema.props.type, dict_found)
+            return False
+            
+        elif isinstance(schema, AnySchema):
+            if schema.props.types is Nil or not schema.props.types:
+                return False
+                
+            for t in schema.props.types:
+                if not _has_ellipsis_recursive(t, dict_found):
+                    return False
+                    
+            return True
+            
+        return True
+    
+    dict_found = [False]
+    result = _has_ellipsis_recursive(schema, dict_found)
+    
+    if not dict_found[0]:
+        return False
+        
+    return result

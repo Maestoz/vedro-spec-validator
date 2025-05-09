@@ -1,0 +1,29 @@
+name: Run Unit Tests
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    name: Run Vedro Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install system dependencies (optional)
+        run: sudo apt-get update && sudo apt-get install -y make
+
+      - name: Install dev dependencies
+        run: make install-dev
+
+      - name: Run unit tests
+        run: make run-unittest-units
