@@ -21,6 +21,11 @@ setup(
     license="Apache-2.0",
     packages=find_packages(),
     install_requires=find_required(),
+    entry_points={
+        'console_scripts': [
+            'vedro-spec-cache=vedro_spec_validator.jj_spec_validator.cli:cache_specs',
+        ],
+    },
     classifiers=[
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.10",
