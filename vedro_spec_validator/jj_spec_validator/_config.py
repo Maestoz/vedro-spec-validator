@@ -11,4 +11,4 @@ class Config:
     IS_RAISES = False
     IS_STRICT = False
     SKIP_IF_FAILED_TO_GET_SPEC = False
-    SHOW_PERFORMANCE_METRICS = True  # if True, execution time metrics will be printed to console
+    SHOW_PERFORMANCE_METRICS = False  # if True, execution time metrics will be printed to console
