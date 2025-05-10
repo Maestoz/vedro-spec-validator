@@ -1,4 +1,5 @@
 import asyncio
+import time
 from functools import wraps
 from typing import Callable, TypeVar
 
@@ -57,7 +58,6 @@ def validate_spec(*,
                 is_strict=is_strict if is_strict is not None else Config.IS_STRICT
                 )
 
-
         @wraps(func)
         async def async_wrapper(*args: object, **kwargs: object) -> _T:
             mocked = await func(*args, **kwargs)
@@ -65,7 +65,13 @@ def validate_spec(*,
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
+                
+                start_validate_time = time.perf_counter() if Config.SHOW_PERFORMANCE_METRICS else None
                 validator.validate(mocked, spec)
+                
+                if Config.SHOW_PERFORMANCE_METRICS and start_validate_time is not None:
+                    validate_time = time.perf_counter() - start_validate_time
+                    print(f"🕒 [{func_name}] Validation time: {validate_time:.4f} sec")
             else:...
             return mocked
 
@@ -76,7 +82,13 @@ def validate_spec(*,
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
+                
+                start_validate_time = time.perf_counter() if Config.SHOW_PERFORMANCE_METRICS else None
                 validator.validate(mocked, spec)
+                
+                if Config.SHOW_PERFORMANCE_METRICS and start_validate_time is not None:
+                    validate_time = time.perf_counter() - start_validate_time
+                    print(f"🕒 [{func_name}] Validation time: {validate_time:.4f} sec")
             else:...
             return mocked
 
