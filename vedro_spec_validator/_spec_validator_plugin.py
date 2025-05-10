@@ -24,6 +24,7 @@ class SpecValidatorPlugin(Plugin):
         self.buffer_structure: dict[str, Any] = {}
         self.by_unique_missmatch: dict[str, Any] = {}
         self.skipped_list: list[str] = []
+        jj_sv_Config.SHOW_PERFORMANCE_METRICS = config.show_performance_metrics
         jj_sv_Config.IS_RAISES = config.is_raised
         jj_sv_Config.IS_STRICT = config.is_strict
         jj_sv_Config.IS_ENABLED = True
@@ -146,3 +147,5 @@ class SpecValidator(PluginConfig):
     is_strict = False  # If True - validate exact structure in given mocked. False - allow to mock incomplete body.
 
     skip_if_failed_to_get_spec = False # If True - validation will be skipped if failed to get spec.
+
+    show_performance_metrics = False  # if True, execution time metrics will be printed to console
