@@ -52,7 +52,7 @@ def has_ellipsis_in_all_branches(schema: GenericSchema) -> bool:
             dict_found[0] = True
             
             if schema.props.keys is Nil or not schema.props.keys:
-                return False
+                return True
                 
             has_ellipsis_key = any(is_ellipsis(k) for k in schema.props.keys.keys())
             
