@@ -115,12 +115,14 @@ class SpecValidatorPlugin(Plugin):
                 if func_name in self.buffer_structure:
                     self.buffer_structure[func_name] += f"\n\nNext call:\n{str(e)}"
                 else:
-                    self.buffer_structure[func_name] = f"\n{str(e)}"
+                    self.buffer_structure[func_name] = text.split('\n')[0] + '\n'
+                    self.buffer_structure[func_name] += f"\n{str(e)}"
             else:
                 if func_name in self.buffer_structure:
                     self.buffer_structure[func_name] += f"\n\n{text}\n{str(e)}"
                 else:
-                    self.buffer_structure[func_name] = f"{text}\n{str(e)}"
+                    self.buffer_structure[func_name] = text.split('\n')[0] + '\n'
+                    self.buffer_structure[func_name] += f"{text}\n{str(e)}"
         elif e:
             if func_name in self.buffer_structure:
                 self.buffer_structure[func_name] += f"\n\n{str(e)}"

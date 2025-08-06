@@ -30,9 +30,10 @@ class Validator:
         self.spec_link = spec_link
         self.force_strict = force_strict
         self.prefix = prefix
+        self.matched_spec_units = ""
 
     def _validation_failure(self, exception: Exception) -> None:
-        output(func_name=self.func_name, text=f"⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :", e=exception)
+        output(func_name=self.func_name, text=f"Matched unit: {self.matched_spec_units}\n⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :", e=exception)
 
         if self.is_raise_error:
             raise ValidationException(f"There are some mismatches in {self.func_name}:\n{str(exception)}") from None
@@ -78,6 +79,7 @@ class Validator:
 
         spec_unit = prepared_spec.get(matched_status_spec_units[0])
 
+        self.matched_spec_units = str(matched_status_spec_units[0])
         return spec_unit, mocked_body
 
     def validate(self, mocked: _T, spec: Spec) -> None:
