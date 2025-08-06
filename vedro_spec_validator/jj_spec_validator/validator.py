@@ -33,7 +33,7 @@ class Validator:
         self.matched_spec_units = ""
 
     def _validation_failure(self, exception: Exception) -> None:
-        output(func_name=self.func_name, text=f"Matched unit: {self.matched_spec_units}\n⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :", e=exception)
+        output(func_name=self.func_name, text=f"Matched unit in {self.func_name}: {self.matched_spec_units}\n⚠️ ⚠️ ⚠️ There are some mismatches in {self.func_name} :", e=exception)
 
         if self.is_raise_error:
             raise ValidationException(f"There are some mismatches in {self.func_name}:\n{str(exception)}") from None
