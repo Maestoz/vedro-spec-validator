@@ -7,13 +7,19 @@ from schemax import SchemaData
 from . import Config
 from .output import output
 from .spec import Spec
-from .utils import create_openapi_matcher, get_forced_strict_spec, load_cache, validate_non_strict
+from .utils import (
+    create_openapi_matcher,
+    filter_ignored_fields,
+    get_forced_strict_spec,
+    load_cache,
+    parse_ignore_patterns,
+    validate_non_strict,
+)
 from .utils._refiner import has_ellipsis_in_all_branches
 
 _T = TypeVar('_T')
 
 class Validator:
-
     def __init__(self,
                  skip_if_failed_to_get_spec: bool,
                  is_raise_error: bool,
@@ -22,6 +28,7 @@ class Validator:
                  spec_link: str | None = None,
                  force_strict: bool = False,
                  prefix: str | None = None,
+                 ignore_fields: str = ""
                  ):
         self.skip_if_failed_to_get_spec = skip_if_failed_to_get_spec
         self.is_raise_error = is_raise_error
@@ -30,6 +37,7 @@ class Validator:
         self.spec_link = spec_link
         self.force_strict = force_strict
         self.prefix = prefix
+        self.ignore_fields = ignore_fields
         self.matched_spec_units = ""
 
     def _validation_failure(self, exception: Exception) -> None:
@@ -40,7 +48,6 @@ class Validator:
 
     def _prepare_validation(self, mocked, spec: Spec,
                            ) -> tuple[SchemaData | None, Any] | tuple[None, None]:
-
         if mocked.handler.response.content_type.lower().startswith("application/json"):
             try:
                 mocked_body = loads(mocked.handler.response.get_body())
@@ -83,7 +90,6 @@ class Validator:
         return spec_unit, mocked_body
 
     def validate(self, mocked: _T, spec: Spec) -> None:
-
         spec_unit, decoded_mocked_body = self._prepare_validation(mocked=mocked, spec=spec)
         if decoded_mocked_body is None:
             return None
@@ -99,11 +105,15 @@ class Validator:
                         output(func_name=self.func_name, text=f"⚠️ Probably `force_strict=True` is required for {self.func_name}.\n")
                     spec_response_schema = spec_response_schema
 
+                # Filter ignored fields before validation
+                ignore_patterns = parse_ignore_patterns(self.ignore_fields)
+                filtered_body = filter_ignored_fields(decoded_mocked_body, ignore_patterns)
+
                 try:
                     if self.is_strict:
-                        validate_or_fail(spec_response_schema, decoded_mocked_body)
+                        validate_or_fail(spec_response_schema, filtered_body)
                     else:
-                        validate_non_strict(spec_response_schema, decoded_mocked_body)
+                        validate_non_strict(spec_response_schema, filtered_body)
 
                 except ValidationException as exception:
                     self._validation_failure(exception)

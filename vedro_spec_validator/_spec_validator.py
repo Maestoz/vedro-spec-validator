@@ -12,7 +12,8 @@ def validate_spec(*,
                   is_raise_error: bool | None = None,
                   is_strict: bool | None = None,
                   prefix: str | None = None,
-                  force_strict: bool = False
+                  force_strict: bool = False,
+                  ignore_fields: str | None = None
                   ) -> Callable[[Callable[..., _T]], Callable[..., _T]]:
     return validate_spec_external(spec_link=spec_link,
                                   skip_reason=skip_reason,
@@ -20,4 +21,5 @@ def validate_spec(*,
                                   is_raise_error=is_raise_error,
                                   is_strict=is_strict,
                                   prefix=prefix,
-                                  force_strict=force_strict)
+                                  force_strict=force_strict,
+                                  ignore_fields=ignore_fields)

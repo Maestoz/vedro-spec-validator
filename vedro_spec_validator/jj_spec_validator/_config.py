@@ -12,3 +12,4 @@ class Config:
     IS_STRICT = False
     SKIP_IF_FAILED_TO_GET_SPEC = False
     SHOW_PERFORMANCE_METRICS = False  # if True, execution time metrics will be printed to console
+    IGNORE_FIELDS = ""  # comma-separated wildcard patterns for fields to ignore, e.g. "x-*,test-*"
