@@ -30,6 +30,7 @@ class SpecValidatorPlugin(Plugin):
         jj_sv_Config.IS_ENABLED = True
         jj_sv_Config.SKIP_IF_FAILED_TO_GET_SPEC = config.skip_if_failed_to_get_spec
         jj_sv_Config.OUTPUT_FUNCTION = self._custom_output
+        jj_sv_Config.IGNORE_FIELDS = config.ignore_fields
         schemax.Config.OUTPUT_FUNCTION = self._schemax_output_catcher
 
     def subscribe(self, dispatcher: Dispatcher) -> None:
@@ -151,3 +152,5 @@ class SpecValidator(PluginConfig):
     skip_if_failed_to_get_spec = False # If True - validation will be skipped if failed to get spec.
 
     show_performance_metrics = False  # if True, execution time metrics will be printed to console
+
+    ignore_fields = ""  # Comma-separated wildcard patterns for fields to ignore, e.g. "x-*,name[*]"
