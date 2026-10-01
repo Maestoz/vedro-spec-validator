@@ -60,7 +60,8 @@ class TestValidateSpec(unittest.TestCase):
             func_name="test_func",
             skip_if_failed_to_get_spec=True,
             is_strict=True,
-            force_strict=True
+            force_strict=True,
+            cache_processed=False
         )
         
         mock_validator_class.assert_called_once_with(
@@ -102,7 +103,8 @@ class TestValidateSpec(unittest.TestCase):
                 func_name="test_func",
                 skip_if_failed_to_get_spec=True,
                 is_strict=True,
-                force_strict=False
+                force_strict=False,
+                cache_processed=False
             )
             
             mock_validator_class.assert_called_once_with(

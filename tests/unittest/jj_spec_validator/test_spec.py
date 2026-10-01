@@ -262,8 +262,8 @@ class TestGetSchemaFromJson(unittest.TestCase):
         result = self.spec._get_schema_from_json(raw_spec)
         
         self.assertEqual(result, expected_schema_data)
-        mock_collect_schema_data.assert_called_once_with(raw_spec)
-    
+        mock_collect_schema_data.assert_called_once_with(raw_spec, None)
+
     @patch('vedro_spec_validator.jj_spec_validator.spec.collect_schema_data')
     def test_get_schema_from_json_error(self, mock_collect_schema_data):
         raw_spec = {"invalid": "spec"}
@@ -277,8 +277,8 @@ class TestGetSchemaFromJson(unittest.TestCase):
         self.assertTrue(f"Failed to parse {self.spec_link} to schema via schemax" in str(context.exception))
         self.assertTrue("Probably the spec is broken or has an unsupported format" in str(context.exception))
         self.assertTrue(f"Original exception: {original_exception}" in str(context.exception))
-        
-        mock_collect_schema_data.assert_called_once_with(raw_spec)
+
+        mock_collect_schema_data.assert_called_once_with(raw_spec, None)
 
 
 class TestBuildDictOfSchemas(unittest.TestCase):
@@ -466,7 +466,45 @@ class TestGetPreparedSpecUnits(unittest.TestCase):
         mock_load_cache.assert_called_once_with(spec_link)
         mock_get_schema.assert_called_once_with(raw_spec)
         mock_build_dict.assert_called_once_with(schema_data)
-    
+
+    @patch('vedro_spec_validator.jj_spec_validator.spec.urlparse')
+    @patch('vedro_spec_validator.jj_spec_validator.spec.validate_cache_file')
+    @patch('vedro_spec_validator.jj_spec_validator.spec.load_cache')
+    @patch('vedro_spec_validator.jj_spec_validator.spec.Spec._get_schema_from_json')
+    @patch('vedro_spec_validator.jj_spec_validator.spec.Spec._build_dict_of_schemas')
+    def test_get_prepared_spec_units_url_with_cache_processed(self, mock_build_dict, mock_get_schema,
+                                                              mock_load_cache, mock_validate_cache, mock_urlparse):
+        spec_link = "https://example.com/api/spec.json"
+        url_parts = Mock()
+        url_parts.scheme = "https"
+        url_parts.netloc = "example.com"
+        mock_urlparse.return_value = url_parts
+
+        mock_validate_cache.return_value = True
+
+        mock_schema = Mock(spec=SchemaData)
+        mock_schema.http_method = "get"
+        mock_schema.path = "/test"
+        mock_schema.status = "200"
+
+        schema_data = [mock_schema]
+        mock_get_schema.return_value = schema_data
+
+        expected_result = {("GET", "/test", "200"): mock_schema}
+        mock_build_dict.return_value = expected_result
+        mock_load_cache.return_value = expected_result
+
+        spec = Spec(spec_link, self.func_name, cache_processed=True)
+
+        result = spec.get_prepared_spec_units()
+
+        self.assertEqual(result, expected_result)
+        mock_urlparse.assert_called_with(spec_link)
+        mock_validate_cache.assert_called_once_with(spec_link)
+        mock_load_cache.assert_called_once_with(spec_link)
+        mock_get_schema.assert_not_called()
+        mock_build_dict.assert_not_called()
+
     @patch('vedro_spec_validator.jj_spec_validator.spec.urlparse')
     @patch('vedro_spec_validator.jj_spec_validator.spec.validate_cache_file')
     @patch('vedro_spec_validator.jj_spec_validator.spec.Spec._download_spec')
@@ -511,7 +549,7 @@ class TestGetPreparedSpecUnits(unittest.TestCase):
         mock_validate_cache.assert_called_once_with(spec_link)
         mock_download_spec.assert_called_once()
         mock_parse_spec.assert_called_once_with(mock_response)
-        mock_save_cache.assert_called_once_with(spec_link=spec_link, raw_schema=raw_spec)
+        mock_save_cache.assert_called_once_with(spec_link=spec_link, obj=raw_spec)
         mock_get_schema.assert_called_once_with(raw_spec)
         mock_build_dict.assert_called_once_with(schema_data)
     

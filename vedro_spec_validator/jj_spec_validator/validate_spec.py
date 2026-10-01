@@ -7,8 +7,8 @@ from jj import RelayResponse
 
 from ._config import Config
 from .output import output
-from .spec import Spec, SchemaParseError
-from .validator import Validator
+from .spec import Spec
+from .validator import Validator, extract_body, response_structure
 
 _T = TypeVar('_T')
 
@@ -36,6 +36,8 @@ def validate_spec(*,
     """
     def decorator(func: Callable[..., _T]) -> Callable[..., _T]:
         func_name = func.__name__
+        # Per-decorator cache of validated response structures; skips re-validation entirely on cache hit
+        validated_structures: set = set()
 
         if skip_reason:
             output(text=f"{func_name} is skipped because: {skip_reason}")
@@ -45,7 +47,8 @@ def validate_spec(*,
                 func_name=func_name,
                 skip_if_failed_to_get_spec=skip_if_failed_to_get_spec if skip_if_failed_to_get_spec is not None else Config.SKIP_IF_FAILED_TO_GET_SPEC,
                 is_strict=is_strict if is_strict is not None else Config.IS_STRICT,
-                force_strict=force_strict
+                force_strict=force_strict,
+                cache_processed=Config.CACHE_AS_PROCESSED_SCHEMAS,
             )
 
             validator = Validator(
@@ -65,14 +68,25 @@ def validate_spec(*,
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
-                
+
+                # Check cache BEFORE calling validate — skip all heavy work
+                if Config.SKIP_VALIDATED_STRUCTURES:
+                    structure = response_structure(extract_body(mocked))
+                    if structure in validated_structures:
+                        return mocked
+
                 start_validate_time = time.perf_counter() if Config.SHOW_PERFORMANCE_METRICS else None
                 validator.validate(mocked, spec)
                 
                 if Config.SHOW_PERFORMANCE_METRICS and start_validate_time is not None:
                     validate_time = time.perf_counter() - start_validate_time
                     print(f"🕒 [{func_name}] Validation time: {validate_time:.4f} sec")
-            else:...
+
+                # Add structure to cache after successful validation
+                if Config.SKIP_VALIDATED_STRUCTURES:
+                    validated_structures.add(structure)
+            else:
+                ...
             return mocked
 
         @wraps(func)
@@ -82,14 +96,23 @@ def validate_spec(*,
                 if isinstance(mocked.handler.response, RelayResponse):
                     print("RelayResponse type is not supported")
                     return mocked
-                
+
+                if Config.SKIP_VALIDATED_STRUCTURES:
+                    structure = response_structure(extract_body(mocked))
+                    if structure in validated_structures:
+                        return mocked
+
                 start_validate_time = time.perf_counter() if Config.SHOW_PERFORMANCE_METRICS else None
                 validator.validate(mocked, spec)
                 
                 if Config.SHOW_PERFORMANCE_METRICS and start_validate_time is not None:
                     validate_time = time.perf_counter() - start_validate_time
                     print(f"🕒 [{func_name}] Validation time: {validate_time:.4f} sec")
-            else:...
+
+                if Config.SKIP_VALIDATED_STRUCTURES:
+                    validated_structures.add(structure)
+            else:
+                ...
             return mocked
 
         if asyncio.iscoroutinefunction(func):
